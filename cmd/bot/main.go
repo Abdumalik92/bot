@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/abdumalik92/bot/internal/app/commands"
+	"github.com/abdumalik92/bot/internal/service/product"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -25,27 +27,10 @@ func main() {
 	}
 	updates := bot.GetUpdatesChan(u)
 
-	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-		if update.Message != nil { // If we got a message
-			switch update.Message.Command() {
-			case "help":
-				helpCommand(bot, update.Message)
-			default:
-				defaultBehavior(bot, update.Message)
-			}
-		}
-	}
-}
+	productService := product.NewService()
 
-func helpCommand(bot *tgbotapi.BotAPI, inputMessage *tgbotapi.Message) {
-	msg := tgbotapi.NewMessage(inputMessage.Chat.ID, "/help - help")
-	bot.Send(msg)
-}
-func defaultBehavior(bot *tgbotapi.BotAPI, inputMessage *tgbotapi.Message) {
-	log.Printf("[%s] %s", inputMessage.From.UserName, inputMessage.Text)
-	msg := tgbotapi.NewMessage(inputMessage.Chat.ID, "You wrote: "+inputMessage.Text)
-	bot.Send(msg)
+	commander := commands.NewCommander(bot, productService)
+	for update := range updates {
+		commander.HandleUpdate(update)
+	}
 }
